@@ -109,7 +109,7 @@ This container includes several security features:
 
 ## License
 
-This Dockerfile and associated scripts are provided under the same license as MediaWiki itself (GPL-2.0+).
+This Dockerfile and associated scripts are provided under the Apache License, Version 2.0.
 
 ## Contributing
 
