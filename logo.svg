@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+
+  <!-- MediaWiki Sunburst -->
+  <defs>
+    <linearGradient id="sunGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF4800;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#BE00FF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="200" cy="190" r="80" fill="url(#sunGradient)" />
+  <circle cx="200" cy="190" r="55" fill="#1A202C" />
+
+  <!-- Improved Chainguard/Wolfi Pink Squid -->
+  <g fill="#FF61C6">
+    <!-- Squid Head -->
+    <ellipse cx="197.5" cy="185" rx="30" ry="30" />
+
+    <!-- Squid Tentacles -->
+    <path d="M175 190
+             Q170 205 172 220
+             Q178 210 182 225
+             Q187 210 192 225
+             Q197 210 202 225
+             Q207 210 212 225
+             Q217 210 223 220
+             Q225 205 220 180 Z" />
+  </g>
+</svg>
