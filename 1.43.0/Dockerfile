@@ -26,7 +26,6 @@ RUN apk update && \
     diffutils \
     ca-certificates \
     shadow \
-    busybox \
     imagemagick \
     python3
 
