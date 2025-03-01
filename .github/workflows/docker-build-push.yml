@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Image (Alternative)
 
 on:
   push:
@@ -58,24 +58,23 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # Build and push the Docker image
-      - name: Build and push Docker image
+      # Build Docker image locally first (don't push yet)
+      - name: Build Docker image locally
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./1.43.0/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:scan-target
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64
 
       # Scan the image for vulnerabilities with Trivy
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          image-ref: '${{ env.IMAGE_NAME }}:scan-target'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
@@ -84,9 +83,22 @@ jobs:
       # Upload vulnerability report
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always() && success() && github.event_name != 'pull_request'
+        if: always() && success()
         with:
           sarif_file: 'trivy-results.sarif'
+
+      # Push the Docker image (only if not a pull request)
+      - name: Push Docker image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./1.43.0/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          platforms: linux/amd64
 
       # Add a summary with scan results
       - name: Post build summary
