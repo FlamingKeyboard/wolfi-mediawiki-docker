@@ -43,12 +43,20 @@ jobs:
         id: build-script
         run: |
           chmod +x ./build.sh
-          ./build.sh --username ${{ secrets.DOCKERHUB_USERNAME }} --token ${{ secrets.DOCKERHUB_TOKEN }} --auto-push
+          # Run script with --output-versions to generate version info file
+          ./build.sh --username ${{ secrets.DOCKERHUB_USERNAME }} --token ${{ secrets.DOCKERHUB_TOKEN }} --auto-push --output-versions
           
-          # Save the latest versions for later steps
-          echo "PHP_VERSION=$(docker inspect -f '{{index .Config.Env 0}}' gavinfullertx582/wolfi-mediawiki:latest | sed 's/PHP_VERSION=//g')" >> $GITHUB_ENV
-          echo "MEDIAWIKI_VERSION=$(docker inspect -f '{{index .Config.Env 1}}' gavinfullertx582/wolfi-mediawiki:latest | sed 's/MEDIAWIKI_VERSION=//g')" >> $GITHUB_ENV
-          echo "MEDIAWIKI_MAJOR_VERSION=$(docker inspect -f '{{index .Config.Env 2}}' gavinfullertx582/wolfi-mediawiki:latest | sed 's/MEDIAWIKI_MAJOR_VERSION=//g')" >> $GITHUB_ENV
+          # Load the versions from the output file
+          if [ -f "version_info.env" ]; then
+            cat version_info.env >> $GITHUB_ENV
+            echo "Successfully loaded version information"
+            echo "PHP_VERSION: $PHP_VERSION"
+            echo "MEDIAWIKI_VERSION: $MEDIAWIKI_VERSION"
+            echo "MEDIAWIKI_MAJOR_VERSION: $MEDIAWIKI_MAJOR_VERSION"
+          else
+            echo "::error::Version information file not found"
+            exit 1
+          fi
       
       # Pull the image for scanning (using the one that our build script created and pushed)
       - name: Pull image for scanning

@@ -9,6 +9,7 @@ cd "$SCRIPT_DIR"
 DOCKERHUB_USERNAME=""
 DOCKERHUB_TOKEN=""
 AUTO_PUSH=false
+OUTPUT_VERSIONS=false
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -23,6 +24,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --auto-push)
       AUTO_PUSH=true
+      shift
+      ;;
+    --output-versions)
+      OUTPUT_VERSIONS=true
       shift
       ;;
     *)
@@ -119,6 +124,16 @@ MEDIAWIKI_VERSIONS=$(get_latest_mediawiki_version)
 MEDIAWIKI_MAJOR_VERSION=$(echo "$MEDIAWIKI_VERSIONS" | cut -d':' -f1)
 MEDIAWIKI_VERSION=$(echo "$MEDIAWIKI_VERSIONS" | cut -d':' -f2)
 echo "✅ Latest MediaWiki version: $MEDIAWIKI_VERSION (major: $MEDIAWIKI_MAJOR_VERSION)"
+
+# Output version information to a file if requested
+if [ "$OUTPUT_VERSIONS" = "true" ]; then
+    echo "Writing version information to version_info.env"
+    cat > "$SCRIPT_DIR/version_info.env" << EOF
+PHP_VERSION=$PHP_VERSION
+MEDIAWIKI_VERSION=$MEDIAWIKI_VERSION
+MEDIAWIKI_MAJOR_VERSION=$MEDIAWIKI_MAJOR_VERSION
+EOF
+fi
 
 # Create build directory
 BUILD_DIR="$SCRIPT_DIR/build"
@@ -516,7 +531,7 @@ check_mediawiki_setup() {
         # Try regular setup page first
         local setup_response=$(curl -s --max-time 5 http://localhost:8080/mw-config/index.php?page=Welcome)
         
-        # Check for expected content
+        # Check for expected content - don't output the full response to avoid broken pipe
         if echo "$setup_response" | grep -q "The environment has been checked"; then
             echo "✅ MediaWiki environment check successful"
             return 0
@@ -540,8 +555,13 @@ check_mediawiki_setup() {
         
         if [ $attempt -eq $max_attempts ]; then
             echo "❌ MediaWiki setup check failed after $max_attempts attempts"
-            echo "Response from setup page:"
-            echo "$setup_response" | head -n 20
+            
+            # Don't try to print the entire response, just check if we got anything
+            if [ -n "$setup_response" ]; then
+                echo "Got a response from the server, but it doesn't match expected patterns"
+            else
+                echo "No response from the setup page"
+            fi
             
             # Check if any web server is responding
             if curl -s --max-time 5 http://localhost:8080/ > /dev/null; then
@@ -550,9 +570,9 @@ check_mediawiki_setup() {
                 echo "✗ Web server is not responding at http://localhost:8080/"
             fi
             
-            # Check container logs
-            echo "Container logs:"
-            docker logs $CONTAINER_ID | tail -n 50
+            # Check container logs - limited output to avoid pipe issues
+            echo "Container logs (last 20 lines):"
+            docker logs $CONTAINER_ID | tail -n 20
             
             return 1
         fi
