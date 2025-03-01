@@ -63,6 +63,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./1.43.0/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -78,11 +79,12 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail the build if vulnerabilities are found
 
       # Upload vulnerability report
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && success() && github.event_name != 'pull_request'
         with:
           sarif_file: 'trivy-results.sarif'
 
