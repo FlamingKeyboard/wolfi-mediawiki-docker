@@ -7,11 +7,9 @@ ENV PHP_VERSION=${PHP_VERSION}
 # Allow build-time customization of MediaWiki version
 ARG MEDIAWIKI_VERSION=1.43.0
 ENV MEDIAWIKI_VERSION=${MEDIAWIKI_VERSION}
+ENV MEDIAWIKI_MAJOR_VERSION=$(echo ${MEDIAWIKI_VERSION} | cut -d. -f1,2)
 
-# Accept the major version directly as a build arg (calculated by the build script)
-ARG MEDIAWIKI_MAJOR_VERSION=1.43
-ENV MEDIAWIKI_MAJOR_VERSION=${MEDIAWIKI_MAJOR_VERSION}
-
+# Install necessary packages for MediaWiki
 # Generate a list of required PHP extensions
 RUN echo "Detected PHP version: ${PHP_VERSION}" && \
     apk update && \
